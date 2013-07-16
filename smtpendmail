@@ -16,6 +16,7 @@
  * Without any restrictions - do what you want.
  */
 
+////////////////////////////////////////////////////
 // CONFIG:
 $user = 'you@gmail.com';
 $pass = 'pass';
@@ -35,7 +36,7 @@ $logs_dir = '/var/log/smtpendmail/';
 // disable sending to other recipients
 $clear_other_recipients = true;
 // END CONFIG
-
+////////////////////////////////////////////////////
 
 require_once "Mail.php";
 ini_set('default_socket_timeout', 3);
