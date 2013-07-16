@@ -1,0 +1,97 @@
+#!/usr/bin/php
+<?php
+
+/**
+ * SMTPendmail
+ * Sendmail imitating script for sending mails by SMTP
+ * 
+ * Requires Pear Mail package: http://pear.php.net/package/Mail
+ * 
+ * INSTALL for PHP:
+ * 1. Place the script in desired dir.
+ * 2. Set sendmail_path in php.ini to this script.
+ * 3. Edit configuration. 
+ * 
+ * Distributed under MIT License
+ * Without any restrictions - do what you want.
+ */
+
+// CONFIG:
+$user = 'you@gmail.com';
+$pass = 'pass';
+$host = 'ssl://smtp.gmail.com';
+$port = 465;
+
+//use this to force sending every mail to given address
+//$force_To = 'you@gmail.com';
+
+// profix for every subject
+//$subject_prefix = 'From Sendmail: ';
+
+// mails loging
+$mails_log = true;
+$logs_dir = '/var/log/smtpendmail/';
+
+// disable sending to other recipients
+$clear_other_recipients = true;
+// END CONFIG
+
+
+require_once "Mail.php";
+ini_set('default_socket_timeout', 3);
+
+$headers = array();
+$headers_raw = '';
+$end = false;
+do {
+	$line = trim(fgets(STDIN));
+	if ($line == '') {
+		$end = true;
+	}
+	else {
+		$headers_raw .= $line."\n";
+		list($key, $val) = explode(':', $line, 2);
+		$headers[$key] = trim($val);
+	}
+} while ($end !== true);
+
+$body = '';
+$end = false;
+do {
+	$line = trim(fgets(STDIN));
+	if ($line == '') {
+		if ($end === 1) {
+			$end = true;
+		}
+		else {
+			$end = 1;
+		}
+	}
+	else {
+		$end = false;
+		$body .= $line."\n";
+	}
+} while ($end !== true);
+
+if ($mails_log) {
+	file_put_contents($logs_dir.'sendmail_' . date("Y-m-d_H-i-s").substr((string)microtime(), 1, 8).'.eml', $headers_raw."\n".$body);
+}
+
+$to = (isset($force_To) && $force_To != '') ? $force_To : $headers['To'];
+$headers['Subject'] = ((isset($subject_prefix)) ? $subject_prefix : '') . $headers['Subject'];
+
+if ($clear_other_recipients) {
+	unset($headers['Bcc'], $headers['Cc']);
+}
+ 
+$smtp = Mail::factory('smtp',
+	array (
+		'host' => $host,
+		'port' => $port,
+		'auth' => true,
+		'username' => $user,
+		'password' => $pass));
+
+ $mail = $smtp->send($to, $headers, $body);
+
+?>
